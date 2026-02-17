@@ -78,7 +78,7 @@ export default function Overworld({ setScreen }) {
   const pauseItems = ['RESUME', 'COLLECTION', 'SAVE', 'EXIT'];
   useInput((action) => {
     if (dialog) return;
-    if (action === 'START') {
+    if (action === 'START' || (action === 'B' && !paused)) {
       setPaused(p => !p);
       setPauseIdx(0);
       return;
@@ -337,23 +337,25 @@ export default function Overworld({ setScreen }) {
       <div className="mobile-controls">
         <div className="mobile-dpad">
           <button className="m-btn m-up"
-            onTouchStart={() => mobileMove('up')}
-            onTouchEnd={() => mobileStop('up')}>▲</button>
+            onTouchStart={(e) => { e.preventDefault(); mobileMove('up'); }}
+            onTouchEnd={(e) => { e.preventDefault(); mobileStop('up'); }}>▲</button>
           <button className="m-btn m-left"
-            onTouchStart={() => mobileMove('left')}
-            onTouchEnd={() => mobileStop('left')}>◀</button>
+            onTouchStart={(e) => { e.preventDefault(); mobileMove('left'); }}
+            onTouchEnd={(e) => { e.preventDefault(); mobileStop('left'); }}>◀</button>
           <button className="m-btn m-right"
-            onTouchStart={() => mobileMove('right')}
-            onTouchEnd={() => mobileStop('right')}>▶</button>
+            onTouchStart={(e) => { e.preventDefault(); mobileMove('right'); }}
+            onTouchEnd={(e) => { e.preventDefault(); mobileStop('right'); }}>▶</button>
           <button className="m-btn m-down"
-            onTouchStart={() => mobileMove('down')}
-            onTouchEnd={() => mobileStop('down')}>▼</button>
+            onTouchStart={(e) => { e.preventDefault(); mobileMove('down'); }}
+            onTouchEnd={(e) => { e.preventDefault(); mobileStop('down'); }}>▼</button>
         </div>
         <div className="mobile-ab">
           <button className="m-btn m-b"
-            onClick={() => setPaused(p => !p)}>B</button>
+            onTouchStart={(e) => { e.preventDefault(); window.dispatchEvent(new KeyboardEvent('keydown', { key: 'x', bubbles: true })); }}
+            onTouchEnd={(e) => { e.preventDefault(); window.dispatchEvent(new KeyboardEvent('keyup', { key: 'x', bubbles: true })); }}>B</button>
           <button className="m-btn m-a"
-            onClick={interact}>A</button>
+            onTouchStart={(e) => { e.preventDefault(); window.dispatchEvent(new KeyboardEvent('keydown', { key: 'z', bubbles: true })); }}
+            onTouchEnd={(e) => { e.preventDefault(); window.dispatchEvent(new KeyboardEvent('keyup', { key: 'z', bubbles: true })); }}>A</button>
         </div>
       </div>
     </div>

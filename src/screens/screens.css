@@ -492,7 +492,7 @@
     transform: translateX(-50%);
     font-family: 'Press Start 2P', cursive;
     font-size: 8px;
-    color: rgba(255, 255, 255, 0.4);
+    color: rgba(0, 0, 0, 0.7);
     z-index: 5;
     pointer-events: none;
     white-space: nowrap;

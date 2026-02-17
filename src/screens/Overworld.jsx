@@ -330,7 +330,7 @@ export default function Overworld({ setScreen }) {
 
       {/* Controls hint */}
       {!dialog && !paused && (
-        <div className="controls-hint">WASD/Arrows Move · Z Interact · Shift Menu</div>
+        <div className="controls-hint">WASD/Arrows Move · Z Interact · X/Esc/Backspace Back · Shift Menu</div>
       )}
 
       {/* Mobile controls */}

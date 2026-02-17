@@ -23,6 +23,7 @@ export default function useInput(callback, deps = []) {
         };
 
         const onDown = (e) => {
+            if (e.repeat) return; // ignore OS key-repeat so menus don't cycle too fast
             const action = KEY_MAP[e.key];
             if (action) {
                 e.preventDefault();

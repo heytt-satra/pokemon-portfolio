@@ -69,46 +69,16 @@ export default function EncounterScreen({ setScreen }) {
   // Action menu
   const menuItems = ['INSPECT', 'RUN'];
 
-  useInput((action) => {
-    if (dialog) return;
-
-    if (phase === PHASES.MENU) {
-      if (action === 'UP' || action === 'DOWN') setMenuIdx(i => i === 0 ? 1 : 0);
-      if (action === 'A') {
-        if (menuIdx === 0) {
-          // INSPECT
-          setPhase(PHASES.INSPECT);
-          setDialog([entity.description]);
-        } else {
-          // RUN
-          setDialog(['Got away safely!']);
-          setPhase(PHASES.DONE);
-        }
-      }
-    }
-
-    if (phase === PHASES.CATCH_MENU) {
-      if (action === 'UP' || action === 'DOWN') setSubMenuIdx(i => i === 0 ? 1 : 0);
-      if (action === 'A') {
-        if (subMenuIdx === 0) {
-          // CATCH
-          startCatchAnimation();
-        } else {
-          // RELEASE / BACK
-          setPhase(PHASES.MENU);
-        }
-      }
-      if (action === 'B') setPhase(PHASES.MENU);
-    }
-  }, [phase, menuIdx, subMenuIdx, dialog, entity]);
-
-  // After inspect dialog
-  const handleInspectComplete = useCallback(() => {
-    setDialog(null);
-    if (entity?.catchable) {
-      setPhase(PHASES.CATCH_MENU);
+  // Menu action handlers (shared by keyboard + mobile tap)
+  const doMenuAction = useCallback((idx) => {
+    if (idx === 0) {
+      // INSPECT
+      setPhase(PHASES.INSPECT);
+      setDialog([entity.description]);
     } else {
-      setPhase(PHASES.MENU);
+      // RUN
+      setDialog(['Got away safely!']);
+      setPhase(PHASES.DONE);
     }
   }, [entity]);
 
@@ -138,6 +108,50 @@ export default function EncounterScreen({ setScreen }) {
       setPhase(PHASES.RESULT);
     }, 1800);
   }, [entity, alreadyCaught, store]);
+
+  const doCatchAction = useCallback((idx) => {
+    if (idx === 0) {
+      // CATCH
+      startCatchAnimation();
+    } else {
+      // RELEASE — let it go and leave
+      setDialog([`${entity?.name} was released.`, 'You let it go freely.']);
+      setPhase(PHASES.DONE);
+    }
+  }, [entity, startCatchAnimation]);
+
+  useInput((action) => {
+    if (dialog) return;
+
+    if (phase === PHASES.MENU) {
+      if (action === 'UP' || action === 'DOWN') setMenuIdx(i => i === 0 ? 1 : 0);
+      if (action === 'A') doMenuAction(menuIdx);
+      if (action === 'B') {
+        setDialog(['Got away safely!']);
+        setPhase(PHASES.DONE);
+      }
+    }
+
+    if (phase === PHASES.CATCH_MENU) {
+      if (action === 'UP' || action === 'DOWN') setSubMenuIdx(i => i === 0 ? 1 : 0);
+      if (action === 'A') doCatchAction(subMenuIdx);
+      if (action === 'B') {
+        setSubMenuIdx(0);
+        setPhase(PHASES.MENU);
+      }
+    }
+  }, [phase, menuIdx, subMenuIdx, dialog, entity, doMenuAction, doCatchAction]);
+
+  // After inspect dialog — reset subMenuIdx so CATCH is highlighted by default
+  const handleInspectComplete = useCallback(() => {
+    setDialog(null);
+    setSubMenuIdx(0);
+    if (entity?.catchable) {
+      setPhase(PHASES.CATCH_MENU);
+    } else {
+      setPhase(PHASES.MENU);
+    }
+  }, [entity]);
 
   // Handle dialog complete based on phase
   const handleDialogComplete = useCallback(() => {
@@ -224,7 +238,7 @@ export default function EncounterScreen({ setScreen }) {
             {menuItems.map((item, i) => (
               <div key={item}
                 className={`enc-action-item ${i === menuIdx ? 'active' : ''}`}
-                onClick={() => { setMenuIdx(i); }}>
+                onClick={() => { setMenuIdx(i); doMenuAction(i); }}>
                 {i === menuIdx ? '▶' : ' '} {item}
               </div>
             ))}
@@ -240,11 +254,11 @@ export default function EncounterScreen({ setScreen }) {
           </div>
           <div className="enc-action-grid">
             <div className={`enc-action-item ${subMenuIdx === 0 ? 'active' : ''}`}
-              onClick={() => setSubMenuIdx(0)}>
+              onClick={() => { setSubMenuIdx(0); doCatchAction(0); }}>
               {subMenuIdx === 0 ? '▶' : ' '} CATCH
             </div>
             <div className={`enc-action-item ${subMenuIdx === 1 ? 'active' : ''}`}
-              onClick={() => setSubMenuIdx(1)}>
+              onClick={() => { setSubMenuIdx(1); doCatchAction(1); }}>
               {subMenuIdx === 1 ? '▶' : ' '} RELEASE
             </div>
           </div>

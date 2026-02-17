@@ -15,9 +15,9 @@ const BIO_DIALOG = [
 ];
 
 const LINKS = [
-  { label: 'GitHub', icon: '💻', url: 'https://github.com/heytt' },
-  { label: 'LinkedIn', icon: '🔗', url: 'https://linkedin.com/in/heytt' },
-  { label: 'Twitter/X', icon: '🐦', url: 'https://x.com/heytt' },
+  { label: 'GitHub', icon: '💻', url: 'https://github.com/heytt-satra' },
+  { label: 'LinkedIn', icon: '🔗', url: 'https://www.linkedin.com/in/heytt-satra/' },
+  { label: 'Twitter/X', icon: '🐦', url: 'https://x.com/satra_heytt' },
   { label: 'RESUME ★', icon: '📄', url: '#' },
 ];
 

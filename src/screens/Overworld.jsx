@@ -26,11 +26,24 @@ export default function Overworld({ setScreen }) {
     animX: PLAYER_START.x * TILE_SIZE, animY: PLAYER_START.y * TILE_SIZE,
   });
   const keysRef = useRef({});
-  const [dialog, setDialog] = useState(null);
-  const [paused, setPaused] = useState(false);
+  const [dialog, _setDialog] = useState(null);
+  const dialogRef = useRef(null);
+  const [paused, _setPaused] = useState(false);
+  const pausedRef = useRef(false);
+  const interactCooldown = useRef(0);
   const [pauseIdx, setPauseIdx] = useState(0);
   const [banner, setBanner] = useState('HEYTT TOWN');
   const [encounterFlash, setEncounterFlash] = useState(false);
+
+  // Sync React state with refs so the 60fps game loop reads current values
+  const setDialog = useCallback((v) => { dialogRef.current = v; _setDialog(v); }, []);
+  const setPaused = useCallback((v) => {
+    if (typeof v === 'function') {
+      _setPaused(prev => { const next = v(prev); pausedRef.current = next; return next; });
+    } else {
+      pausedRef.current = v; _setPaused(v);
+    }
+  }, []);
 
   const store = useGameStore();
 
@@ -165,7 +178,12 @@ export default function Overworld({ setScreen }) {
       setScreen(pending.screen);
     }
     setDialog(null);
-  }, [setScreen]);
+    // Set cooldown so interact() doesn't immediately re-trigger
+    interactCooldown.current = 15;
+    // Clear interaction keys
+    const keys = keysRef.current;
+    keys['z'] = false; keys['Z'] = false; keys[' '] = false; keys['Enter'] = false;
+  }, [setScreen, setDialog]);
 
   // ── Game loop ──
   useEffect(() => {
@@ -188,8 +206,11 @@ export default function Overworld({ setScreen }) {
       const keys = keysRef.current;
       const ts = TILE_SIZE * SCALE;
 
-      // ── Movement logic ──
-      if (!s.moving && !dialog && !paused) {
+      // Tick interaction cooldown
+      if (interactCooldown.current > 0) interactCooldown.current--;
+
+      // ── Movement logic ── (use refs for current state)
+      if (!s.moving && !dialogRef.current && !pausedRef.current) {
         let dx = 0, dy = 0, dir = s.dir;
         if (keys['ArrowUp'] || keys['w'] || keys['W']) { dy = -1; dir = 'up'; }
         else if (keys['ArrowDown'] || keys['s'] || keys['S']) { dy = 1; dir = 'down'; }
@@ -213,8 +234,8 @@ export default function Overworld({ setScreen }) {
           }
         }
 
-        // Interaction
-        if (keys['z'] || keys['Z'] || keys[' '] || keys['Enter']) {
+        // Interaction — only if cooldown expired
+        if (interactCooldown.current <= 0 && (keys['z'] || keys['Z'] || keys[' '] || keys['Enter'])) {
           keys['z'] = false; keys['Z'] = false; keys[' '] = false; keys['Enter'] = false;
           interact();
         }

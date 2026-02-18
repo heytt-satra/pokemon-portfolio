@@ -15,7 +15,7 @@ import DialogBox from '../components/DialogBox';
 import '../screens/screens.css';
 
 const SCALE = 3;
-const WALK_SPEED = 12; // frames to move one tile (higher = slower)
+const WALK_SPEED = 9; // frames to move one tile (higher = slower)
 
 export default function Overworld({ setScreen }) {
   const canvasRef = useRef(null);

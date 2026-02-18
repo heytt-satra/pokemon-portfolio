@@ -13,7 +13,11 @@ export default function EncounterScreen({ setScreen }) {
   const entity = store.currentEncounter;
   const [phase, setPhase] = useState(PHASES.INTRO);
   const [menuIdx, setMenuIdx] = useState(0);
+  const menuIdxRef = useRef(0);
+  menuIdxRef.current = menuIdx;
   const [subMenuIdx, setSubMenuIdx] = useState(0);
+  const subMenuIdxRef = useRef(0);
+  subMenuIdxRef.current = subMenuIdx;
   const [dialog, setDialog] = useState(null);
   const [showBall, setShowBall] = useState(false);
   const [wobble, setWobble] = useState(false);
@@ -127,7 +131,7 @@ export default function EncounterScreen({ setScreen }) {
 
     if (phase === PHASES.MENU) {
       if (action === 'UP' || action === 'DOWN') setMenuIdx(i => i === 0 ? 1 : 0);
-      if (action === 'A') doMenuAction(menuIdx);
+      if (action === 'A') doMenuAction(menuIdxRef.current);
       if (action === 'B') {
         setDialog(['Got away safely!']);
         setPhase(PHASES.DONE);
@@ -136,13 +140,13 @@ export default function EncounterScreen({ setScreen }) {
 
     if (phase === PHASES.CATCH_MENU) {
       if (action === 'UP' || action === 'DOWN') setSubMenuIdx(i => i === 0 ? 1 : 0);
-      if (action === 'A') doCatchAction(subMenuIdx);
+      if (action === 'A') doCatchAction(subMenuIdxRef.current);
       if (action === 'B') {
         setSubMenuIdx(0);
         setPhase(PHASES.MENU);
       }
     }
-  }, [phase, menuIdx, subMenuIdx, dialog, entity, doMenuAction, doCatchAction]);
+  }, []);
 
   // After inspect dialog — reset subMenuIdx so CATCH is highlighted by default
   const handleInspectComplete = useCallback(() => {

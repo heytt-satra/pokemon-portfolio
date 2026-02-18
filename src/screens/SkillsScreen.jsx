@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import useGameStore from '../store/useGameStore';
 import useInput from '../hooks/useInput';
 import DialogBox from '../components/DialogBox';
@@ -17,6 +17,8 @@ const TYPE_COLORS = {
 export default function SkillsScreen() {
   const setScreen = useGameStore((s) => s.setScreen);
   const [selectedBadge, setSelectedBadge] = useState(0);
+  const selectedBadgeRef = useRef(0);
+  selectedBadgeRef.current = selectedBadge;
   const [dialog, setDialog] = useState(null);
 
   useInput((action) => {
@@ -27,10 +29,10 @@ export default function SkillsScreen() {
     if (action === 'LEFT') setSelectedBadge((i) => Math.max(0, i - 1));
     if (action === 'RIGHT') setSelectedBadge((i) => Math.min(SKILL_DATA.length - 1, i + 1));
     if (action === 'A') {
-      const cat = SKILL_DATA[selectedBadge];
+      const cat = SKILL_DATA[selectedBadgeRef.current];
       setDialog([`${cat.label}`, ...cat.skills.map(s => `  ${s.name}: LV.${s.level}`)]);
     }
-  }, [selectedBadge, dialog]);
+  }, []);
 
   const cat = SKILL_DATA[selectedBadge];
 

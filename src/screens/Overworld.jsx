@@ -89,18 +89,23 @@ export default function Overworld({ setScreen }) {
 
   // ── Pause menu ──
   const pauseItems = ['RESUME', 'COLLECTION', 'SAVE', 'EXIT'];
+  const pauseIdxRef = useRef(0);
+  // Keep ref in sync with state
+  pauseIdxRef.current = pauseIdx;
+
   useInput((action) => {
     if (dialog) return;
     if (action === 'START' || (action === 'B' && !paused)) {
       setPaused(p => !p);
       setPauseIdx(0);
+      pauseIdxRef.current = 0;
       return;
     }
     if (paused) {
       if (action === 'UP') setPauseIdx(i => Math.max(0, i - 1));
       if (action === 'DOWN') setPauseIdx(i => Math.min(pauseItems.length - 1, i + 1));
       if (action === 'A') {
-        const sel = pauseItems[pauseIdx];
+        const sel = pauseItems[pauseIdxRef.current];
         if (sel === 'RESUME') setPaused(false);
         if (sel === 'COLLECTION') {
           setPaused(false);
@@ -114,7 +119,7 @@ export default function Overworld({ setScreen }) {
       }
       if (action === 'B') setPaused(false);
     }
-  }, [paused, pauseIdx, dialog]);
+  }, []);
 
   // ── Encounter trigger check ──
   const checkEncounter = useCallback((tx, ty) => {

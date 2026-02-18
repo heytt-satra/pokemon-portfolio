@@ -34,7 +34,7 @@ const transitions = {
 
 // Map screens to music tracks
 const SCREEN_TRACKS = {
-  boot: null,         // silence during boot
+  boot: 'gamefreak',     // Game Freak logo music
   title: 'title',
   intro: 'intro',
   overworld: 'overworld',

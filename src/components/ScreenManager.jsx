@@ -36,9 +36,9 @@ const transitions = {
 const SCREEN_TRACKS = {
   boot: 'gamefreak',     // Game Freak logo music
   title: 'title',
-  intro: 'intro',
+  intro: 'intro',        // Professor Oak
   overworld: 'overworld',
-  encounter: 'encounter',
+  encounter: 'battle',   // Battle! (Wild Pokémon)
   collection: 'menu',
   skills: 'menu',
   projects: 'menu',

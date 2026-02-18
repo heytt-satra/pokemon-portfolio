@@ -3,6 +3,7 @@ import { generateEntitySprite, generatePlayerBackSprite, generatePokeballSprite 
 import useGameStore from '../store/useGameStore';
 import useInput from '../hooks/useInput';
 import DialogBox from '../components/DialogBox';
+import { playSfx } from '../engine/musicEngine';
 import '../screens/screens.css';
 
 const PHASES = { INTRO: 'INTRO', MENU: 'MENU', INSPECT: 'INSPECT', CATCH_MENU: 'CATCH_MENU', CATCH_ANIM: 'CATCH_ANIM', RESULT: 'RESULT', DONE: 'DONE' };
@@ -93,6 +94,7 @@ export default function EncounterScreen({ setScreen }) {
     setTimeout(() => {
       setWobble(false);
       setCaught(true);
+      playSfx('obtained');  // Play "Obtained a Pokémon!" jingle
       if (alreadyCaught) {
         setDialog([
           `You already know about ${entity.name}.`,

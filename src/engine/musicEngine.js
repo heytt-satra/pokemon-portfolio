@@ -3,8 +3,10 @@
  * Files served from public/music/.
  *
  * Usage:
- *   import { playTrack, stopMusic, toggleMute, isMuted } from './musicEngine';
+ *   import { playTrack, stopMusic, toggleMute, isMuted, playSfx, onTrackEnd } from './musicEngine';
  *   playTrack('overworld');
+ *   playSfx('obtained');         // play a one-shot sound over current music
+ *   onTrackEnd('gamefreak', cb); // run callback when track finishes naturally
  *   stopMusic();
  *   toggleMute();
  */
@@ -12,19 +14,21 @@
 const TRACK_FILES = {
     gamefreak: '/music/gamefreak.mp3',
     title: '/music/title.mp3',
-    intro: '/music/title.mp3',     // same track as title
+    intro: '/music/professor_oak.mp3',
     overworld: '/music/overworld.mp3',
-    encounter: '/music/encounter.mp3',
+    battle: '/music/battle.mp3',
+    obtained: '/music/encounter.mp3',
     menu: '/music/gym.mp3',
 };
 
-// Track-specific config: which should loop, which play once
+// Track-specific config
 const TRACK_CONFIG = {
     gamefreak: { loop: false, volume: 0.5 },
     title: { loop: true, volume: 0.4 },
-    intro: { loop: true, volume: 0.3 },
+    intro: { loop: true, volume: 0.35 },
     overworld: { loop: true, volume: 0.4 },
-    encounter: { loop: false, volume: 0.5 },
+    battle: { loop: true, volume: 0.45 },
+    obtained: { loop: false, volume: 0.5 },
     menu: { loop: true, volume: 0.35 },
 };
 
@@ -32,6 +36,7 @@ let currentAudio = null;
 let currentTrack = null;
 let muted = false;
 let masterVolume = 1.0;
+let sfxAudio = null;
 
 // Cache loaded Audio objects
 const audioCache = {};
@@ -44,7 +49,27 @@ function getAudio(trackName) {
         audio.preload = 'auto';
         audioCache[trackName] = audio;
     }
+    // Return a clone if already in-use to allow overlap for SFX
     return audioCache[trackName];
+}
+
+function tryPlay(audio, trackName) {
+    const playPromise = audio.play();
+    if (playPromise) {
+        playPromise.catch(() => {
+            const resume = () => {
+                if (currentTrack === trackName || sfxAudio === audio) {
+                    audio.play().catch(() => { });
+                }
+                document.removeEventListener('click', resume);
+                document.removeEventListener('keydown', resume);
+                document.removeEventListener('touchstart', resume);
+            };
+            document.addEventListener('click', resume, { once: true });
+            document.addEventListener('keydown', resume, { once: true });
+            document.addEventListener('touchstart', resume, { once: true });
+        });
+    }
 }
 
 export function playTrack(trackName) {
@@ -60,36 +85,57 @@ export function playTrack(trackName) {
     audio.loop = config.loop;
     audio.volume = muted ? 0 : config.volume * masterVolume;
     audio.currentTime = 0;
+    audio.onended = null;
 
-    // Handle autoplay restrictions — retry on user interaction
-    const playPromise = audio.play();
-    if (playPromise) {
-        playPromise.catch(() => {
-            // Autoplay blocked — try again on next user click
-            const resume = () => {
-                if (currentTrack === trackName) {
-                    audio.play().catch(() => { });
-                }
-                document.removeEventListener('click', resume);
-                document.removeEventListener('keydown', resume);
-                document.removeEventListener('touchstart', resume);
-            };
-            document.addEventListener('click', resume, { once: true });
-            document.addEventListener('keydown', resume, { once: true });
-            document.addEventListener('touchstart', resume, { once: true });
-        });
-    }
-
+    tryPlay(audio, trackName);
     currentAudio = audio;
+}
 
-    // For non-looping tracks (gamefreak, encounter), fire onended
-    if (!config.loop) {
-        audio.onended = () => {
-            // Non-looping track ended — let ScreenManager handle transition
-            currentTrack = null;
-            currentAudio = null;
-        };
+/**
+ * Register a callback for when a specific track ends naturally (non-looping).
+ * Returns a cleanup function.
+ */
+export function onTrackEnd(trackName, callback) {
+    const audio = getAudio(trackName);
+    if (!audio) return () => { };
+
+    const handler = () => {
+        if (currentTrack === trackName) {
+            callback();
+        }
+    };
+    audio.addEventListener('ended', handler);
+    return () => audio.removeEventListener('ended', handler);
+}
+
+/**
+ * Play a one-shot sound effect OVER the current music (e.g. "obtained" jingle).
+ * The background music is ducked (lowered) while the SFX plays, then restored.
+ */
+export function playSfx(trackName) {
+    const url = TRACK_FILES[trackName];
+    if (!url) return;
+
+    // Duck current music
+    if (currentAudio) {
+        currentAudio.volume = muted ? 0 : 0.1;
     }
+
+    sfxAudio = new Audio(url);
+    const config = TRACK_CONFIG[trackName] || { volume: 0.5 };
+    sfxAudio.volume = muted ? 0 : config.volume * masterVolume;
+    sfxAudio.loop = false;
+
+    sfxAudio.onended = () => {
+        // Restore background music volume
+        if (currentAudio && currentTrack) {
+            const bgConfig = TRACK_CONFIG[currentTrack] || { volume: 0.4 };
+            currentAudio.volume = muted ? 0 : bgConfig.volume * masterVolume;
+        }
+        sfxAudio = null;
+    };
+
+    tryPlay(sfxAudio, trackName);
 }
 
 export function stopMusic() {
@@ -97,6 +143,10 @@ export function stopMusic() {
         currentAudio.pause();
         currentAudio.currentTime = 0;
         currentAudio.onended = null;
+    }
+    if (sfxAudio) {
+        sfxAudio.pause();
+        sfxAudio = null;
     }
     currentTrack = null;
     currentAudio = null;
@@ -115,6 +165,9 @@ export function toggleMute() {
     if (currentAudio && currentTrack) {
         const config = TRACK_CONFIG[currentTrack] || { volume: 0.4 };
         currentAudio.volume = muted ? 0 : config.volume * masterVolume;
+    }
+    if (sfxAudio) {
+        sfxAudio.volume = muted ? 0 : 0.5 * masterVolume;
     }
     return muted;
 }

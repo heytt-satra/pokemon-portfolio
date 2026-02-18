@@ -78,6 +78,29 @@
     margin-top: 24px;
 }
 
+.boot-skip-hint {
+    position: absolute;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 8px;
+    color: rgba(255, 255, 255, 0.3);
+    animation: blink-skip 1.2s infinite;
+}
+
+@keyframes blink-skip {
+
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
 /* ---- TITLE SCREEN ---- */
 .title-fullscreen {
     position: absolute;

@@ -4,8 +4,18 @@ import { useEffect, useRef } from 'react';
  * Universal input hook – maps keyboard, touch, and gamepad
  * to game actions: UP, DOWN, LEFT, RIGHT, A, B, START, SELECT.
  *
+ * Includes per-action timestamp debounce to prevent double-firing
+ * from React StrictMode double-mounting or any other source.
+ *
  * callback(action, type) where type = 'down' | 'up'
  */
+
+// ── Global debounce map (shared across all useInput instances) ──
+// This ensures that even if multiple useInput hooks fire on the same keypress,
+// only the FIRST one processes the action.
+const ACTION_DEBOUNCE_MS = 150; // minimum ms between same action
+const lastActionTime = {};
+
 export default function useInput(callback, deps = []) {
     const cbRef = useRef(callback);
     cbRef.current = callback;
@@ -23,13 +33,21 @@ export default function useInput(callback, deps = []) {
         };
 
         const onDown = (e) => {
-            if (e.repeat) return; // ignore OS key-repeat so menus don't cycle too fast
+            if (e.repeat) return; // ignore OS key-repeat
             const action = KEY_MAP[e.key];
-            if (action) {
-                e.preventDefault();
-                cbRef.current(action, 'down');
-            }
+            if (!action) return;
+
+            e.preventDefault();
+
+            // Per-action timestamp debounce — prevent double-firing
+            const now = performance.now();
+            const lastTime = lastActionTime[action] || 0;
+            if (now - lastTime < ACTION_DEBOUNCE_MS) return;
+            lastActionTime[action] = now;
+
+            cbRef.current(action, 'down');
         };
+
         const onUp = (e) => {
             const action = KEY_MAP[e.key];
             if (action) {

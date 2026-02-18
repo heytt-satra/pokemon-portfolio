@@ -164,8 +164,6 @@ export default function Overworld({ setScreen }) {
     if (zone) {
       store.setLastDoorPosition({ x: tx, y: ty });
       setDialog(zone.dialog);
-      // After dialog, go to screen
-      setDialog(zone.dialog);
       // We handle transition in dialog onComplete below
       stateRef.current._pendingZone = zone;
     }
@@ -178,8 +176,8 @@ export default function Overworld({ setScreen }) {
       setScreen(pending.screen);
     }
     setDialog(null);
-    // Set cooldown so interact() doesn't immediately re-trigger
-    interactCooldown.current = 15;
+    // Set cooldown so interact() doesn't immediately re-trigger (~500ms at 60fps)
+    interactCooldown.current = 30;
     // Clear interaction keys
     const keys = keysRef.current;
     keys['z'] = false; keys['Z'] = false; keys[' '] = false; keys['Enter'] = false;

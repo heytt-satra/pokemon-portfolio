@@ -10,6 +10,7 @@ import {
 import { pickEncounter } from '../data/encounterData';
 import useGameStore from '../store/useGameStore';
 import useInput from '../hooks/useInput';
+import { keyState, clearKeys } from '../engine/inputManager';
 import DialogBox from '../components/DialogBox';
 import '../screens/screens.css';
 
@@ -25,7 +26,7 @@ export default function Overworld({ setScreen }) {
     moving: false, targetX: PLAYER_START.x, targetY: PLAYER_START.y,
     animX: PLAYER_START.x * TILE_SIZE, animY: PLAYER_START.y * TILE_SIZE,
   });
-  const keysRef = useRef({});
+  // Movement uses keyState from singleton InputManager (no extra listeners)
   const [dialog, _setDialog] = useState(null);
   const dialogRef = useRef(null);
   const [paused, _setPaused] = useState(false);
@@ -78,14 +79,8 @@ export default function Overworld({ setScreen }) {
     }
   }, [banner]);
 
-  // ── Input ──
-  useEffect(() => {
-    const down = (e) => { keysRef.current[e.key] = true; };
-    const up = (e) => { keysRef.current[e.key] = false; };
-    window.addEventListener('keydown', down);
-    window.addEventListener('keyup', up);
-    return () => { window.removeEventListener('keydown', down); window.removeEventListener('keyup', up); };
-  }, []);
+  // ── Input — movement uses keyState from singleton InputManager ──
+  // No extra listeners needed. keyState is updated by the ONE global listener.
 
   // ── Pause menu ──
   const pauseItems = ['RESUME', 'COLLECTION', 'SAVE', 'EXIT'];
@@ -183,9 +178,8 @@ export default function Overworld({ setScreen }) {
     setDialog(null);
     // Set cooldown so interact() doesn't immediately re-trigger (~500ms at 60fps)
     interactCooldown.current = 30;
-    // Clear interaction keys
-    const keys = keysRef.current;
-    keys['z'] = false; keys['Z'] = false; keys[' '] = false; keys['Enter'] = false;
+    // Clear interaction keys in the global keyState
+    clearKeys('z', 'Z', ' ', 'Enter');
   }, [setScreen, setDialog]);
 
   // ── Game loop ──
@@ -206,7 +200,7 @@ export default function Overworld({ setScreen }) {
       if (!assetsRef.current) { animId = requestAnimationFrame(loop); return; }
       const { tileset, player, npcSprites } = assetsRef.current;
       const s = stateRef.current;
-      const keys = keysRef.current;
+      const keys = keyState;
       const ts = TILE_SIZE * SCALE;
 
       // Tick interaction cooldown

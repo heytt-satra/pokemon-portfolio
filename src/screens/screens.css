@@ -2,6 +2,35 @@
    FULLSCREEN GAME STYLES
    ============================ */
 
+/* ---- MUSIC TOGGLE ---- */
+.music-toggle-btn {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    z-index: 9999;
+    width: 40px;
+    height: 40px;
+    border: 2px solid #181818;
+    border-radius: 8px;
+    background: rgba(248, 248, 248, 0.85);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    transition: transform 0.15s;
+    font-family: 'Press Start 2P', cursive;
+}
+
+.music-toggle-btn:hover {
+    transform: scale(1.1);
+}
+
+.music-toggle-btn:active {
+    transform: scale(0.95);
+}
+
 /* ---- BOOT SCREEN ---- */
 .boot-fullscreen {
     position: absolute;

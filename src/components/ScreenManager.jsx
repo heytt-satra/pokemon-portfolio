@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import useGameStore from '../store/useGameStore';
+import { playTrack, stopMusic, toggleMute, isMuted } from '../engine/musicEngine';
 import BootScreen from '../screens/BootScreen';
 import TitleScreen from '../screens/TitleScreen';
 import IntroSequence from '../screens/IntroSequence';
@@ -30,9 +32,40 @@ const transitions = {
   },
 };
 
+// Map screens to music tracks
+const SCREEN_TRACKS = {
+  boot: null,         // silence during boot
+  title: 'title',
+  intro: 'intro',
+  overworld: 'overworld',
+  encounter: 'encounter',
+  collection: 'menu',
+  skills: 'menu',
+  projects: 'menu',
+  experience: 'menu',
+  about: 'menu',
+  contact: 'menu',
+};
+
 export default function ScreenManager() {
   const { screen, transition } = useGameStore();
   const setScreen = useGameStore((s) => s.setScreen);
+  const [muted, setMuted] = useState(isMuted());
+
+  // Play the right music track when screen changes
+  useEffect(() => {
+    const track = SCREEN_TRACKS[screen];
+    if (track) {
+      playTrack(track);
+    } else {
+      stopMusic();
+    }
+  }, [screen]);
+
+  const handleMuteToggle = () => {
+    const nowMuted = toggleMute();
+    setMuted(nowMuted);
+  };
 
   const screens = {
     boot: <BootScreen setScreen={setScreen} />,
@@ -63,6 +96,15 @@ export default function ScreenManager() {
           {screens[screen] || screens.boot}
         </motion.div>
       </AnimatePresence>
+
+      {/* Mute / Unmute toggle */}
+      <button
+        onClick={handleMuteToggle}
+        className="music-toggle-btn"
+        title={muted ? 'Unmute Music' : 'Mute Music'}
+      >
+        {muted ? '🔇' : '🔊'}
+      </button>
     </div>
   );
 }

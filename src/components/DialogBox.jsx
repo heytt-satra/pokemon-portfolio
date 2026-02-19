@@ -7,7 +7,8 @@ import useInput from '../hooks/useInput';
  * 
  * - Press A/Space: if TYPING → skip to full text. If WAITING → advance.
  * - Press B: close dialog immediately.
- * - Holding keys does NOT auto-advance (debounce in useInput prevents it).
+ * - An `advancing` ref prevents double-advance when React hasn't yet
+ *   flushed the TYPING state from the useEffect.
  */
 const DIALOG_STATES = { TYPING: 'TYPING', WAITING: 'WAITING', COMPLETE: 'COMPLETE' };
 
@@ -18,12 +19,15 @@ export default function DialogBox({ messages = [], onComplete = () => {}, speed 
   const timerRef = useRef(null);
   const charIndex = useRef(0);
   const completeCalled = useRef(false);
+  const advancing = useRef(false); // Guard against double-advance
 
   const currentMessage = messages[msgIndex] || '';
   const cleanMsg = currentMessage.replace(/\[PAUSE:\d+\]/g, '');
 
   // Type character by character
   useEffect(() => {
+    // Reset the advance guard — new message is now being typed
+    advancing.current = false;
     setDisplayText('');
     setDialogState(DIALOG_STATES.TYPING);
     charIndex.current = 0;
@@ -51,6 +55,7 @@ export default function DialogBox({ messages = [], onComplete = () => {}, speed 
 
   const advance = useCallback(() => {
     if (completeCalled.current) return;
+    if (advancing.current) return; // Block if we already advanced
 
     if (dialogState === DIALOG_STATES.TYPING) {
       // Skip to full text
@@ -58,10 +63,12 @@ export default function DialogBox({ messages = [], onComplete = () => {}, speed 
       setDisplayText(cleanMsg);
       setDialogState(DIALOG_STATES.WAITING);
     } else if (dialogState === DIALOG_STATES.WAITING) {
+      // Lock advances until the useEffect above resets the guard
+      advancing.current = true;
+
       if (msgIndex < messages.length - 1) {
-        // Go to next message
+        // Go to next message — useEffect will reset advancing & set TYPING
         setMsgIndex(i => i + 1);
-        // State resets to TYPING in the useEffect above
       } else {
         // Last message — close dialog
         setDialogState(DIALOG_STATES.COMPLETE);
@@ -87,7 +94,7 @@ export default function DialogBox({ messages = [], onComplete = () => {}, speed 
     if (action === 'B') {
       forceClose();
     }
-  }, [advance, forceClose]);
+  });
 
   return (
     <div className="dialog-box-fullscreen" onClick={advance}>

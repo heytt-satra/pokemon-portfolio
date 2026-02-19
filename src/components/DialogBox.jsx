@@ -11,7 +11,7 @@ import useInput from '../hooks/useInput';
  */
 const DIALOG_STATES = { TYPING: 'TYPING', WAITING: 'WAITING', COMPLETE: 'COMPLETE' };
 
-export default function DialogBox({ messages = [], onComplete = () => {}, speed = 30 }) {
+export default function DialogBox({ messages = [], onComplete = () => {}, speed = 25}) {
   const [msgIndex, setMsgIndex] = useState(0);
   const [displayText, setDisplayText] = useState('');
   const [dialogState, setDialogState] = useState(DIALOG_STATES.TYPING);
